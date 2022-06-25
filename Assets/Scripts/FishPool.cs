@@ -37,8 +37,10 @@ public class FishPool : MonoBehaviour
             float dy = Random.Range(-box.size.y / 2.0f, box.size.y / 2.0f);
             //Debug.Log("start sid = "+sid+" dx = "+dx+" dy = "+dy);
             fb.Init(sid, new RVO.Vector2(dx, dy),new RVO.Vector2(box.size.x,box.size.y));
+            fb.CurrentState = new FishBaseStatePatrol(fb);
+            fb.name = "fish" + sid;
             fishList.Add(fb);
-
+            fb.SetFishSpeed(Random.Range(0.05f, 0.01f));
             //GameObject td = Instantiate(DestPrefab, this.transform);
             //td.transform.localPosition = new Vector3(dx,dy);
         }
@@ -46,6 +48,8 @@ public class FishPool : MonoBehaviour
 
     public FishBase FetchRandomFish()
     {
+        if (fishList.Count <= 0) return null;
+
         int index = Random.Range(0,fishList.Count);
         return fishList[index];
     }

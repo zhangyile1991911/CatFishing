@@ -12,6 +12,8 @@ public abstract class FishBaseState
     public abstract void EnterState();
     public abstract void ExitState();
     public abstract void OnUpdate();
+
+    public abstract bool CanApply(FishBaseState new_state);
 }
 
 //随便乱游
@@ -23,12 +25,18 @@ public class FishBaseStatePatrol : FishBaseState
     }
     public override void EnterState()
     {
-        Debug.Log("sid = " + FishObj.SID + " 进入乱游的状态");
+        Debug.Log("sid = " + FishObj.name + " 进入乱游的状态");
+        FishObj.PlayAnimation(FishBase.FishAnimation.Move);
     }
 
     public override void ExitState()
     {
-        Debug.Log("sid = " + FishObj.SID + " 退出乱游的状态");
+        Debug.Log("sid = " + FishObj.name + " 退出乱游的状态");
+    }
+
+    public override bool CanApply(FishBaseState new_state)
+    {
+        return true;
     }
 
     public override void OnUpdate()
@@ -49,12 +57,13 @@ public class FishBaseStateReaching :FishBaseState
     }
     public override void EnterState()
     {
-        Debug.Log("sid = "+FishObj.SID+" 进入靠近鱼钩的状态");
+        Debug.Log("sid = "+FishObj.name + " 进入靠近鱼钩的状态");
+        FishObj.PlayAnimation(FishBase.FishAnimation.Move);
     }
 
     public override void ExitState()
     {
-        Debug.Log("sid = " + FishObj.SID + " 退出靠近鱼钩的状态");
+        Debug.Log("sid = " + FishObj.name + " 退出靠近鱼钩的状态");
     }
 
     public override void OnUpdate()
@@ -63,6 +72,10 @@ public class FishBaseStateReaching :FishBaseState
         {//靠近钩子了
             FishObj.CurrentState = new FishBaseStateOnHook(FishObj);
         }
+    }
+    public override bool CanApply(FishBaseState new_state)
+    {
+        return true;
     }
 }
 //咬钩
@@ -74,18 +87,33 @@ public class FishBaseStateOnHook : FishBaseState
     }
     public override void EnterState()
     {
-        Debug.Log("sid = " + FishObj.SID + " 进入上钩的状态");
+        Debug.Log("sid = " + FishObj.name + " 进入上钩的状态");
+        EventDispatch.Dispatch(EventID.FishOnHook, 0);
         //todo 播放挣扎动画
+        FishObj.PlayAnimation(FishBase.FishAnimation.Fighting);
     }
 
     public override void ExitState()
     {
-        Debug.Log("sid = " + FishObj.SID + " 退出上钩的状态");
+        Debug.Log("sid = " + FishObj.name + " 退出上钩的状态");
     }
 
     public override void OnUpdate()
     {
 
+    }
+    public override bool CanApply(FishBaseState new_state)
+    {
+        if(new_state.GetType() ==typeof(FishBaseStatePatrol))
+        {
+            return true;
+        }
+        if (new_state.GetType() == typeof(FishBaseStateDead))
+        {
+            return true;
+        }
+
+        return false;
     }
 }
 
@@ -99,6 +127,8 @@ public class FishBaseStateDead:FishBaseState
     public override void EnterState()
     {
         Debug.Log("sid = " + FishObj.SID + " 进入死亡的状态");
+        FishObj.PlayAnimation(FishBase.FishAnimation.Dead);
+        FishObj.RemoveFromRVO();
     }
 
     public override void ExitState()
@@ -109,5 +139,9 @@ public class FishBaseStateDead:FishBaseState
     public override void OnUpdate()
     {
 
+    }
+    public override bool CanApply(FishBaseState new_state)
+    {
+        return false;
     }
 }

@@ -4,20 +4,28 @@ using UnityEngine;
 using RVO;
 public class FishBase : MonoBehaviour
 {
+    public enum FishAnimation { Idle,Move,Fighting,Dead}
     public int SID { get { return Sid; } }
     RVO.Vector2 Destionation;
     int Sid = -1;
     RVO.Vector2 BoxSize;
     SpriteRenderer m_spriteRenderer;
     FishBaseState m_state;
+    Animator m_animator;
     public FishBaseState CurrentState
     {
         get { return m_state; }
-        set { 
-            if(m_state != null)
+        set {
+            if (m_state != null && !m_state.CanApply(value))
+            {
+                return;
+            }
+
+            if (m_state != null)
             {
                 m_state.ExitState();
             }
+            
             m_state = value;
             m_state.EnterState();
         }
@@ -25,6 +33,7 @@ public class FishBase : MonoBehaviour
     public void Init(int sid, RVO.Vector2 dst, RVO.Vector2 boxSize)
     {
         m_spriteRenderer = GetComponent<SpriteRenderer>();
+        m_animator = GetComponent<Animator>();
         Destionation = dst;
         Sid = sid;
         BoxSize = boxSize;
@@ -32,6 +41,11 @@ public class FishBase : MonoBehaviour
         SetFlip();
     }
 
+    public void setNewDestionation(Vector3 pos)
+    {
+        Destionation = new RVO.Vector2(pos.x,pos.y);
+        SetFlip();
+    }
     public bool reachDestionation()
     {
         RVO.Vector2 currentPosition =Simulator.Instance.getAgentPosition(Sid);
@@ -78,10 +92,8 @@ public class FishBase : MonoBehaviour
 
     }
 
-    public void Update()
+    void RVOVisit()
     {
-        if (CurrentState != null) CurrentState.OnUpdate();
-        
         if (Sid < 0) return;
         RVO.Vector2 current_position = Simulator.Instance.getAgentPosition(Sid);
         transform.localPosition = new Vector3(current_position.x(), current_position.y(), 10);
@@ -92,7 +104,43 @@ public class FishBase : MonoBehaviour
             velocity = RVOMath.normalize(velocity);
         }
         Simulator.Instance.setAgentPrefVelocity(Sid, velocity);
+    }
 
+    public void Update()
+    {
+        if (CurrentState != null) CurrentState.OnUpdate();
 
+        RVOVisit();
+    }
+    public virtual void PlayAnimation(FishAnimation fa)
+    {
+        switch(fa)
+        {
+            case FishAnimation.Idle:
+                m_animator.Play("FishIdle");
+                break;
+            case FishAnimation.Move:
+                m_animator.Play("FishIdle");
+                break;
+            case FishAnimation.Fighting:
+                m_animator.Play("FishFight");
+                break;
+            case FishAnimation.Dead:
+                m_animator.Play("FishIdle");
+                break;
+        }
+    }
+    public void RemoveFromRVO()
+    {
+        Simulator.Instance.delAgent(Sid);
+        Sid = -1;
+    }
+    public void SetFishSpeed(float s)
+    {
+        if(Sid >= 0)
+        {
+            Debug.Log("fish name = "+ name+" ËÙ¶È = "+s);
+            Simulator.Instance.setAgentMaxSpeed(Sid, s);
+        }
     }
 }

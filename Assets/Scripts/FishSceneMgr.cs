@@ -6,6 +6,26 @@ using UnityEngine;
 
 public class FishSceneMgr : MonoBehaviour
 {
+    private void Awake()
+    {
+        EventDispatch.RegisterReceiver<int>(EventID.StartFishing, ChooseLuckyFish);
+        EventDispatch.RegisterReceiver<int>(EventID.FishOnHook, FishOnHook);
+        EventDispatch.RegisterReceiver<int>(EventID.CatDrawBack, CatDrawBackRob);
+    }
+    private void OnDestroy()
+    {
+        EventDispatch.UnRegisterReceiver<int>(EventID.StartFishing, ChooseLuckyFish);
+        EventDispatch.UnRegisterReceiver<int>(EventID.FishOnHook, FishOnHook);
+        EventDispatch.UnRegisterReceiver<int>(EventID.CatDrawBack, CatDrawBackRob);
+    }
+    private void OnEnable()
+    {
+       
+    }
+    private void OnDisable()
+    {
+    }
+
     public FishSceneState CurrentState { get { return m_state; }set 
         {
             if (m_state != null)
@@ -17,6 +37,7 @@ public class FishSceneMgr : MonoBehaviour
 
     public CatBase CatObj;
     public FishPool Pool;
+    public BoxCollider Area;
 
     public void Start()
     {
@@ -65,19 +86,66 @@ public class FishSceneMgr : MonoBehaviour
             DrawbackRob();
         }
     }
+    
     Coroutine CatchFishCo;
-    public void WaitingFishOnHook()
+    FishBase ChooseFish;
+    public void ChooseLuckyFish(int param)
     {
         CatchFishCo = StartCoroutine(CatchRandomFish());
     }
+
     public IEnumerator CatchRandomFish()
     {
-        yield return new WaitForSeconds(5);
-        FishBase fb = Pool.FetchRandomFish();
-        Debug.Log("鱼 sid = "+fb.name+" 上钩");
+        int wait_time = Random.Range(1, 10);
+        yield return new WaitForSeconds(wait_time);
+        ChooseFish = Pool.FetchRandomFish();
+        if (ChooseFish != null)
+        {
+            Debug.Log("鱼 name = " + ChooseFish.name + " 上钩");
+            
+
+            //让鱼游到钩子附近
+            Vector3 hookinpool = Pool.transform.InverseTransformPoint(CatObj.RobHook.position);
+            Debug.Log("钩子在鱼塘里的位置 " + hookinpool);
+            ChooseFish.CurrentState = new FishBaseStateReaching(ChooseFish);
+            ChooseFish.setNewDestionation(hookinpool);
+            CatchFishCo = null;
+        }
+    }
+    Coroutine CatDrawBackCo;
+    public void FishOnHook(int param)
+    {
+        CatObj.CurrentState = new CatBaseStateOnHook(CatObj);
+        CatDrawBackCo = StartCoroutine(CountDownDrawBack());
+    }
+    IEnumerator CountDownDrawBack()
+    {
+        //倒计时收杆
+        yield return new WaitForSeconds(2);
+        CatDrawBackCo = null;
+        if (ChooseFish != null && ChooseFish.transform.parent != CatObj.RobHook)
+        {//还在犹豫没有收杆
+            Debug.Log("在犹豫 鱼跑了");
+            CatObj.CurrentState.DrawBackRob();
+            CatObj.CurrentState = new CatBaseStateReady(CatObj);
+            ChooseFish.CurrentState = new FishBaseStatePatrol(ChooseFish);
+        }
+    }
+
+    public void CatDrawBackRob(int param)
+    {
+        if(CatDrawBackCo != null&& ChooseFish != null)
+        {//说明在倒计时结束前 收杆了
+            StopCoroutine(CatDrawBackCo);
+            CatObj.CurrentState = new CatBaseStateReady(CatObj);
+            ChooseFish.CurrentState = new FishBaseStateDead(ChooseFish);
+            ChooseFish.transform.SetParent(CatObj.RobHook);
+            ChooseFish.transform.localPosition = new Vector3(0, 0, 0);
+        }
+        else
+        {
+            Debug.Log("收杆晚了，鱼跑了");
+        }
         
-        //让鱼游到钩子附近
-        Vector3 hookinpool = Pool.transform.InverseTransformPoint(CatObj.RobHook.position);
-        Debug.Log("钩子在鱼塘里的位置 "+hookinpool);
     }
 }

@@ -65,6 +65,7 @@ public class CatBaseStateReady : CatBaseState
     public override void EnterState()
     {
         Debug.Log("进入CatBaseStateReady");
+        //CatObj.PlayAnimation(CatBase.CatAnimation.Idle);
     }
 
     public override void ExitState()
@@ -83,7 +84,6 @@ public class CatBaseStateReady : CatBaseState
                 CatObj.CurrentState = new CatBaseStateFishing(CatObj);
             }
         };
-        CatObj.Manager.WaitingFishOnHook();
     }
 
     public override void DrawBackRob()
@@ -112,6 +112,7 @@ public class CatBaseStateFishing : CatBaseState
     {
         Debug.Log("进入CatBaseStateFishing");
         CatObj.PlayAnimation(CatBase.CatAnimation.Waiting);
+        EventDispatch.Dispatch(EventID.StartFishing, 0);
     }
 
     public override void ExitState()
@@ -135,7 +136,7 @@ public class CatBaseStateFishing : CatBaseState
                 CatObj.CurrentState = new CatBaseStateReady(CatObj);
             }
         };
-
+        EventDispatch.Dispatch(EventID.CatDrawBack, 0);
     }
 
     public override void MoveBackward()
@@ -173,6 +174,7 @@ public class CatBaseStateOnHook : CatBaseState
     public override void DrawBackRob()
     {
         CatObj.DrawbackRob();
+        EventDispatch.Dispatch(EventID.CatDrawBack, 0);
     }
 
     public override void MoveBackward()

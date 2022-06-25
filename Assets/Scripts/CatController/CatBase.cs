@@ -11,7 +11,7 @@ public class CatBase : MonoBehaviour
     protected Animator m_animator;
     protected SpriteRenderer m_spriteRenderer;
     protected FishSceneMgr m_mgr;
-
+    public float Speed = 0.5f;
     private CatBaseState m_state;
     public CatBaseState CurrentState
     {
@@ -52,7 +52,7 @@ public class CatBase : MonoBehaviour
                 m_animator.Play("CatFishingMove");
                 break;
             case CatAnimation.StartFishing:
-                m_animator.Play("CatFishingThrough");
+                m_animator.Play("CatFishingThrow");
                 break;
             case CatAnimation.DrawbackRob:
                 m_animator.Play("CatFishingDrawBack");
@@ -60,23 +60,36 @@ public class CatBase : MonoBehaviour
             case CatAnimation.Waiting:
                 m_animator.Play("CatFishingWaiting");
                 break;
+            case CatAnimation.OnHook:
+                m_animator.Play("CatFishingWarning");
+                break;
         }
     }
     public virtual void MoveForward()
     {
         PlayAnimation(CatAnimation.Move);
-        Vector3 old = transform.position;
-        old.x += 1.0f;
-        transform.position = old;
+        Vector3 old = transform.localPosition;
+        old.x += Speed;
+        float max = Manager.Area.transform.localPosition.x + Manager.Area.size.x/2.0f;
+        if (old.x >= max)
+        {
+            return;
+        }
+        transform.localPosition = old;
         m_spriteRenderer.flipX = false;
     }
 
     public virtual void MoveBackward()
     {
         PlayAnimation(CatAnimation.Move);
-        Vector3 old = transform.position;
-        old.x -= 1.0f;
-        transform.position = old;
+        Vector3 old = transform.localPosition;
+        old.x -= Speed;
+        float min = Manager.Area.transform.localPosition.x - Manager.Area.size.x / 2.0f;
+        if(old.x <= min)
+        {
+            return;
+        }
+        transform.localPosition = old;
         m_spriteRenderer.flipX = true;
     }
 
@@ -99,13 +112,20 @@ public class CatBase : MonoBehaviour
     {
         //if(evt.stringParameter == "through")
         //{
-            
+
         //}
-        //if (evt.stringParameter == "drawback")
-        //{
-            
-        //}
-        if(FinishCallback != null)
+        if (evt.stringParameter == "drawback")
+        {
+            if(RobHook.childCount > 0)
+            {
+                for(int i = 0;i< RobHook.childCount;i++)
+                {
+                    Transform f = RobHook.GetChild(i);
+                    Destroy(f.gameObject);
+                }
+            }
+        }
+        if (FinishCallback != null)
         {
             FinishCallback(evt.stringParameter);
         }
