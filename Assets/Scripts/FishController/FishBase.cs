@@ -30,11 +30,10 @@ public class FishBase : MonoBehaviour
             m_state.EnterState();
         }
     }
-    public void Init(int sid, RVO.Vector2 dst, RVO.Vector2 boxSize)
+    public void Init(int sid, RVO.Vector2 boxSize)
     {
         m_spriteRenderer = GetComponent<SpriteRenderer>();
         m_animator = GetComponent<Animator>();
-        Destionation = dst;
         Sid = sid;
         BoxSize = boxSize;
         

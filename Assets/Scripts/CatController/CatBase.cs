@@ -1,17 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.UI;
 
 
 public class CatBase : MonoBehaviour
 {
     public Transform RobHook;
-    public enum CatAnimation { Idle, Move, StartFishing, Waiting, DrawbackRob, OnHook }
+    public Slider PowerBar;
+    public enum CatAnimation { Idle, Move, HoldOn,StartFishing, Waiting, DrawbackRob, OnHook }
     protected Animator m_animator;
     protected SpriteRenderer m_spriteRenderer;
     protected FishSceneMgr m_mgr;
     public float Speed = 0.5f;
+
+    public float Power { get { return m_power; } }
+    private float m_power = 0f;
     private CatBaseState m_state;
     public CatBaseState CurrentState
     {
@@ -41,6 +45,42 @@ public class CatBase : MonoBehaviour
         CurrentState = new CatBaseStateIdle(this);
 
     }
+    public void ResetPower()
+    {
+        m_power = 0;
+        SetPowerBarValue(m_power);
+    }
+    public void AddPower()
+    {
+        m_power += 0.001f;
+        if(m_power > 1.0)
+        { m_power = 1; }
+        SetPowerBarValue(m_power);
+    }
+    public void ShowPowerBar()
+    {
+        PowerBar.gameObject.SetActive(true);
+    }
+    
+    public void HidePowerBar()
+    {
+        PowerBar.gameObject.SetActive(false);
+    }
+
+    public void SetPowerBarValue(float val)
+    {
+        PowerBar.value = Mathf.Clamp01(val);
+    }
+
+    public virtual void StopAnimation()
+    {
+        m_animator.speed = 0;
+    }
+    public virtual void ResumeAnimation()
+    {
+        m_animator.speed = 1.0f;
+    }
+
     public virtual void PlayAnimation(CatAnimation ca)
     {
         switch(ca)
@@ -53,6 +93,9 @@ public class CatBase : MonoBehaviour
                 break;
             case CatAnimation.StartFishing:
                 m_animator.Play("CatFishingThrow");
+                break;
+            case CatAnimation.HoldOn:
+                m_animator.Play("CatFishingHoldOn");
                 break;
             case CatAnimation.DrawbackRob:
                 m_animator.Play("CatFishingDrawBack");

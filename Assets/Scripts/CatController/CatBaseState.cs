@@ -13,6 +13,10 @@ public abstract class CatBaseState
 
     public abstract void ThrowRob();
 
+    public abstract void HoldOnRob();
+
+    public abstract void ReleaseRob();
+
     public abstract void MoveForward();
 
     public abstract void MoveBackward();
@@ -39,6 +43,14 @@ public class CatBaseStateIdle : CatBaseState
     {
 
     }
+    public override void HoldOnRob()
+    {
+
+    }
+    public override void ReleaseRob()
+    {
+        
+    }
 
     public override void DrawBackRob()
     {
@@ -58,6 +70,7 @@ public class CatBaseStateIdle : CatBaseState
 
 public class CatBaseStateReady : CatBaseState
 {
+    bool isholdon = false;
     public CatBaseStateReady(CatBase cb) : base(cb)
     {
 
@@ -65,6 +78,7 @@ public class CatBaseStateReady : CatBaseState
     public override void EnterState()
     {
         Debug.Log("½øÈëCatBaseStateReady");
+        isholdon = false;
         //CatObj.PlayAnimation(CatBase.CatAnimation.Idle);
     }
 
@@ -72,18 +86,36 @@ public class CatBaseStateReady : CatBaseState
     {
         Debug.Log("ÍË³öCatBaseStateReady");
         CatObj.FinishCallback = null;
+        CatObj.HidePowerBar();
     }
 
     public override void ThrowRob()
     {
         CatObj.PlayAnimation(CatBase.CatAnimation.StartFishing);
+        CatObj.ShowPowerBar();
+        CatObj.ResetPower();
         CatObj.FinishCallback = (string name) =>
         {
+            if(name == "holdon"&&isholdon)
+            {
+                CatObj.StopAnimation();
+            }
             if (name == "throw")
             {
                 CatObj.CurrentState = new CatBaseStateFishing(CatObj);
             }
         };
+    }
+
+    public override void HoldOnRob()
+    {
+        isholdon = true;
+        CatObj.AddPower();
+    }
+
+    public override void ReleaseRob()
+    {
+        CatObj.ResumeAnimation();
     }
 
     public override void DrawBackRob()
@@ -125,9 +157,18 @@ public class CatBaseStateFishing : CatBaseState
     {
 
     }
+    public override void HoldOnRob()
+    {
+
+    }
+    public override void ReleaseRob()
+    {
+
+    }
 
     public override void DrawBackRob()
     {
+        EventDispatch.Dispatch(EventID.CatDrawBack, 0);
         CatObj.PlayAnimation(CatBase.CatAnimation.DrawbackRob);
         CatObj.FinishCallback = (string name) =>
         {
@@ -136,7 +177,7 @@ public class CatBaseStateFishing : CatBaseState
                 CatObj.CurrentState = new CatBaseStateReady(CatObj);
             }
         };
-        EventDispatch.Dispatch(EventID.CatDrawBack, 0);
+        
     }
 
     public override void MoveBackward()
@@ -167,6 +208,16 @@ public class CatBaseStateOnHook : CatBaseState
     }
 
     public override void ThrowRob()
+    {
+
+    }
+
+    public override void HoldOnRob()
+    {
+
+    }
+
+    public override void ReleaseRob()
     {
 
     }

@@ -70,6 +70,7 @@ public class FishSceneMgr : MonoBehaviour
     }
     #endregion
 
+    float holdonstart;
     public void Update()
     {
         if(Input.GetKeyDown(KeyCode.D))
@@ -84,11 +85,21 @@ public class FishSceneMgr : MonoBehaviour
         {
             StartFish();
             DrawbackRob();
+            holdonstart = Time.realtimeSinceStartup;
+        }
+        if(Input.GetKeyUp(KeyCode.Space))
+        {
+            CatObj.CurrentState.ReleaseRob();
+        }
+
+        if(Input.GetKey(KeyCode.Space) && (Time.realtimeSinceStartup - holdonstart) > 0.2f)
+        {
+            CatObj.CurrentState.HoldOnRob();
         }
     }
     
     Coroutine CatchFishCo;
-    FishBase ChooseFish;
+    FishBase LuckyFish;
     public void ChooseLuckyFish(int param)
     {
         CatchFishCo = StartCoroutine(CatchRandomFish());
@@ -98,24 +109,25 @@ public class FishSceneMgr : MonoBehaviour
     {
         int wait_time = Random.Range(1, 10);
         yield return new WaitForSeconds(wait_time);
-        ChooseFish = Pool.FetchRandomFish();
-        if (ChooseFish != null)
+        CatchFishCo = null;
+        LuckyFish = Pool.FetchRandomFish();
+        if (LuckyFish != null)
         {
-            Debug.Log("鱼 name = " + ChooseFish.name + " 上钩");
+            Debug.Log("鱼 name = " + LuckyFish.name + " 上钩");
             
 
             //让鱼游到钩子附近
             Vector3 hookinpool = Pool.transform.InverseTransformPoint(CatObj.RobHook.position);
             Debug.Log("钩子在鱼塘里的位置 " + hookinpool);
-            ChooseFish.CurrentState = new FishBaseStateReaching(ChooseFish);
-            ChooseFish.setNewDestionation(hookinpool);
-            CatchFishCo = null;
+            LuckyFish.CurrentState = new FishBaseStateReaching(LuckyFish);
+            LuckyFish.setNewDestionation(hookinpool);
         }
     }
     Coroutine CatDrawBackCo;
     public void FishOnHook(int param)
     {
         CatObj.CurrentState = new CatBaseStateOnHook(CatObj);
+        //LuckyFish.transform.SetParent(CatObj.RobHook.transform);
         CatDrawBackCo = StartCoroutine(CountDownDrawBack());
     }
     IEnumerator CountDownDrawBack()
@@ -123,29 +135,42 @@ public class FishSceneMgr : MonoBehaviour
         //倒计时收杆
         yield return new WaitForSeconds(2);
         CatDrawBackCo = null;
-        if (ChooseFish != null && ChooseFish.transform.parent != CatObj.RobHook)
+
+        CatObj.CurrentState.DrawBackRob();
+        CatObj.CurrentState = new CatBaseStateReady(CatObj);
+        if (LuckyFish != null)
         {//还在犹豫没有收杆
-            Debug.Log("在犹豫 鱼跑了");
-            CatObj.CurrentState.DrawBackRob();
-            CatObj.CurrentState = new CatBaseStateReady(CatObj);
-            ChooseFish.CurrentState = new FishBaseStatePatrol(ChooseFish);
+            Debug.Log("在犹豫 鱼跑了");  
+            LuckyFish.CurrentState = new FishBaseStatePatrol(LuckyFish);
+            LuckyFish.transform.SetParent(this.Pool.transform);
+            LuckyFish = null;
         }
     }
 
     public void CatDrawBackRob(int param)
     {
-        if(CatDrawBackCo != null&& ChooseFish != null)
+        if(CatchFishCo != null)
+        {
+            StopCoroutine(CatchFishCo);
+        }
+
+        if (CatDrawBackCo != null)
         {//说明在倒计时结束前 收杆了
             StopCoroutine(CatDrawBackCo);
             CatObj.CurrentState = new CatBaseStateReady(CatObj);
-            ChooseFish.CurrentState = new FishBaseStateDead(ChooseFish);
-            ChooseFish.transform.SetParent(CatObj.RobHook);
-            ChooseFish.transform.localPosition = new Vector3(0, 0, 0);
+            LuckyFish.CurrentState = new FishBaseStateDead(LuckyFish);
+            LuckyFish.transform.SetParent(CatObj.RobHook.transform);
+            LuckyFish.transform.localPosition = new Vector3(0,0,0);
         }
         else
         {
-            Debug.Log("收杆晚了，鱼跑了");
+            Debug.Log("收杆早了 鱼还没上钩");
+            if(LuckyFish != null)
+            {
+                LuckyFish.CurrentState = new FishBaseStatePatrol(LuckyFish);
+            }
         }
+        
         
     }
 }

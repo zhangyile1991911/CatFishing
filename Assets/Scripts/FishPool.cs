@@ -33,10 +33,10 @@ public class FishPool : MonoBehaviour
             int sid = Simulator.Instance.addAgent(new RVO.Vector2(x, y));
             //Debug.Log("sid = " + sid + " position = "+t.transform.position);
             //随机目的地
-            float dx = Random.Range(-box.size.x / 2.0f, box.size.x / 2.0f);
-            float dy = Random.Range(-box.size.y / 2.0f, box.size.y / 2.0f);
+            //float dx = Random.Range(-box.size.x / 2.0f, box.size.x / 2.0f);
+            //float dy = Random.Range(-box.size.y / 2.0f, box.size.y / 2.0f);
             //Debug.Log("start sid = "+sid+" dx = "+dx+" dy = "+dy);
-            fb.Init(sid, new RVO.Vector2(dx, dy),new RVO.Vector2(box.size.x,box.size.y));
+            fb.Init(sid, new RVO.Vector2(box.size.x,box.size.y));
             fb.CurrentState = new FishBaseStatePatrol(fb);
             fb.name = "fish" + sid;
             fishList.Add(fb);

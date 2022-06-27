@@ -27,6 +27,7 @@ public class FishBaseStatePatrol : FishBaseState
     {
         Debug.Log("sid = " + FishObj.name + " 进入乱游的状态");
         FishObj.PlayAnimation(FishBase.FishAnimation.Move);
+        FishObj.choseNewDestionation();
     }
 
     public override void ExitState()
@@ -91,6 +92,7 @@ public class FishBaseStateOnHook : FishBaseState
         EventDispatch.Dispatch(EventID.FishOnHook, 0);
         //todo 播放挣扎动画
         FishObj.PlayAnimation(FishBase.FishAnimation.Fighting);
+        FishObj.setNewDestionation(new Vector3(0,0,0));
     }
 
     public override void ExitState()
