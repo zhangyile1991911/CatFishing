@@ -8,7 +8,7 @@ public class CatBase : MonoBehaviour
 {
     public Transform RobHook;
     public Slider PowerBar;
-    public enum CatAnimation { Idle, Move, HoldOn,StartFishing, Waiting, DrawbackRob, OnHook }
+    public enum CatAnimation { Idle, Move, HoldOn,StartFishing, Waiting, DrawbackRob, OnHook ,ThrowClose,ThrowMiddle,ThrowFar}
     protected Animator m_animator;
     protected SpriteRenderer m_spriteRenderer;
     protected FishSceneMgr m_mgr;
@@ -34,6 +34,7 @@ public class CatBase : MonoBehaviour
 
     public delegate void AnimationCallback(string name);
     public AnimationCallback FinishCallback;
+    public AnimationCallback StartCallback;
 
     public FishSceneMgr Manager { get { return m_mgr; } }
     
@@ -72,13 +73,25 @@ public class CatBase : MonoBehaviour
         PowerBar.value = Mathf.Clamp01(val);
     }
 
-    public virtual void StopAnimation()
+    public virtual void HoldOnRob()
     {
-        m_animator.speed = 0;
+        //m_animator.speed = 0;
     }
-    public virtual void ResumeAnimation()
+    public virtual void AfterHoldOnRob()
     {
-        m_animator.speed = 1.0f;
+        //m_animator.speed = 1.0f;
+        if(m_power <= 0.3f)
+        {//播放抛竿比较近的动画
+            PlayAnimation(CatAnimation.ThrowClose);
+        }
+        if(m_power > 0.3f && m_power <= 0.6f)
+        {
+            PlayAnimation(CatAnimation.ThrowMiddle);
+        }
+        if(m_power > 0.6f)
+        {
+            PlayAnimation(CatAnimation.ThrowFar);
+        }
     }
 
     public virtual void PlayAnimation(CatAnimation ca)
@@ -94,14 +107,46 @@ public class CatBase : MonoBehaviour
             case CatAnimation.StartFishing:
                 m_animator.Play("CatFishingThrow");
                 break;
+            case CatAnimation.ThrowClose:
+                m_animator.Play("CatFishingThrowClose");
+                break;
+            case CatAnimation.ThrowMiddle:
+                m_animator.Play("CatFishingThrowMiddle");
+                break;
+            case CatAnimation.ThrowFar:
+                m_animator.Play("CatFishingThrowFar");
+                break;
             case CatAnimation.HoldOn:
                 m_animator.Play("CatFishingHoldOn");
                 break;
             case CatAnimation.DrawbackRob:
-                m_animator.Play("CatFishingDrawBack");
+                if (m_power <= 0.3f)
+                {
+                    m_animator.Play("CatFishingDrawBackClose");
+                }
+                if (m_power > 0.3f && m_power <= 0.6f)
+                {
+                    m_animator.Play("CatFishingDrawBackMiddle");
+                }
+                if (m_power > 0.6f)
+                {
+                    m_animator.Play("CatFishingDrawBackFar");
+                }
+                break;
                 break;
             case CatAnimation.Waiting:
-                m_animator.Play("CatFishingWaiting");
+                if (m_power <= 0.3f)
+                {
+                    m_animator.Play("CatFishingWaitingClose");
+                }
+                if (m_power > 0.3f && m_power <= 0.6f)
+                {
+                    m_animator.Play("CatFishingWaitingMiddle");
+                }
+                if (m_power > 0.6f)
+                {
+                    m_animator.Play("CatFishingWaitingFar");
+                }
                 break;
             case CatAnimation.OnHook:
                 m_animator.Play("CatFishingWarning");
@@ -148,7 +193,10 @@ public class CatBase : MonoBehaviour
 
     public void StartAnimationEvent(AnimationEvent evt)
     {
-        
+        if(StartCallback != null)
+        {
+            StartCallback(evt.stringParameter);
+        }
     }
 
     public void FinishAnimationEvent(AnimationEvent evt)

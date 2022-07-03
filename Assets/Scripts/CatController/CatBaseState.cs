@@ -98,7 +98,7 @@ public class CatBaseStateReady : CatBaseState
         {
             if(name == "holdon"&&isholdon)
             {
-                CatObj.StopAnimation();
+                CatObj.HoldOnRob();
             }
             if (name == "throw")
             {
@@ -115,7 +115,7 @@ public class CatBaseStateReady : CatBaseState
 
     public override void ReleaseRob()
     {
-        CatObj.ResumeAnimation();
+        CatObj.AfterHoldOnRob();
     }
 
     public override void DrawBackRob()
@@ -138,7 +138,7 @@ public class CatBaseStateFishing : CatBaseState
 {
     public CatBaseStateFishing(CatBase cb) : base(cb)
     {
-
+        
     }
     public override void EnterState()
     {
@@ -151,6 +151,7 @@ public class CatBaseStateFishing : CatBaseState
     {
         Debug.Log("ÕÀ»ÎCatBaseStateFishing");
         CatObj.FinishCallback = null;
+        CatObj.StartCallback = null;
     }
 
     public override void ThrowRob()
